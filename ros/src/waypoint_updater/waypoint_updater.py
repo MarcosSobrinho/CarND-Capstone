@@ -6,7 +6,7 @@ from styx_msgs.msg import Lane, Waypoint
 
 import math
 
-from scipy.spacial import KDTree
+from scipy.spatial import KDTree
 import numpy as np
 
 '''
