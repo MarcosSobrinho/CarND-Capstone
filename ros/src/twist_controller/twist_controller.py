@@ -40,15 +40,22 @@ class Controller(object):
         
         
     def control(self, linear_vel, angular_vel, current_vel, dbw_enabled):
+        
         if not dbw_enabled : 
             self.throttle_controller.reset()
             return 0., 0., 0.
+
+        #rospy.loginfo("Angular vel: {0}".format(angular_vel))
+        #rospy.loginfo("Target velocity: {0}".format(linear_vel))
+        # rospy.loginfo("Target angular velocity: {0}".format(angular_vel))
+        # rospy.loginfo("Current velocity: {0}".format(current_vel))
         
-        current_vel = self.vel_lpf(current_vel)
+        current_vel = self.vel_lpf.filt(current_vel)
         
         steering = self.yaw_controller.get_steering(linear_vel, angular_vel, current_vel)
         
         vel_error = linear_vel - current_vel
+        rospy.loginfo("Velocity Error: {0}".format(vel_error))
         current_time = rospy.get_time()
         sample_time = current_time - self.last_time
         self.last_time = current_time
