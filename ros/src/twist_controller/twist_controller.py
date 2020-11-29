@@ -55,7 +55,7 @@ class Controller(object):
         steering = self.yaw_controller.get_steering(linear_vel, angular_vel, current_vel)
         
         vel_error = linear_vel - current_vel
-        rospy.loginfo("Velocity Error: {0}".format(vel_error))
+        # rospy.loginfo("Velocity Error: {0}".format(vel_error))
         current_time = rospy.get_time()
         sample_time = current_time - self.last_time
         self.last_time = current_time
