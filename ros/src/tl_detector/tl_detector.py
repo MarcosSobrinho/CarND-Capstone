@@ -77,6 +77,8 @@ class TLDetector(object):
             msg (Image): image from car-mounted camera
 
         """
+        if self.waypoint_tree is None : 
+            return 
         self.has_image = True
         self.camera_image = msg
         light_wp, state = self.process_traffic_lights()
@@ -99,7 +101,7 @@ class TLDetector(object):
             self.upcoming_red_light_pub.publish(Int32(self.last_wp))
         self.state_count += 1
 
-    def get_closest_waypoint(self, pose):
+    def get_closest_waypoint(self, x, y):
         """Identifies the closest path waypoint to the given position
             https://en.wikipedia.org/wiki/Closest_pair_of_points_problem
         Args:
@@ -111,7 +113,7 @@ class TLDetector(object):
         """
         
         #TODO implement -> done 
-        return self.waypoint_tree.query([pose.position.x, pose.position.y], 1)[1]
+        return self.waypoint_tree.query([x, y], 1)[1]
 
     def get_light_state(self, light):
         """Determines the current color of the traffic light
@@ -151,19 +153,20 @@ class TLDetector(object):
         # List of positions that correspond to the line to stop in front of for a given intersection
         stop_line_positions = self.config['stop_line_positions']
         if(self.pose):
-            car_wp_idx = self.get_closest_waypoint(self.pose.pose)
+            car_pos = self.pose.pose.position
+            car_wp_idx = self.get_closest_waypoint(car_pos.x, car_pos.y)
 
         #TODO find the closest visible traffic light (if one exists) -> done 
         distance_to_tl = len(self.waypoints.waypoints)
         for i, light in enumerate(self.lights):
             stop_line = stop_line_positions[i]
-            line_wp_idx = self.get_closest_waypoint(stop_line)
+            line_wp_idx = self.get_closest_waypoint(stop_line[0], stop_line[1])
             
             dist = line_wp_idx - car_wp_idx
-            if dist >= 0 and dist < len_wps : 
+            if dist >= 0 and dist < distance_to_tl : 
                 distance_to_tl = dist
                 closest_light = light
-                closest_line_idx = line_wp_index
+                closest_line_idx = line_wp_idx
 
         if closest_light:
             state = self.get_light_state(closest_light)
