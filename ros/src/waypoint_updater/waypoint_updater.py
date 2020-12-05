@@ -3,6 +3,7 @@
 import rospy
 from geometry_msgs.msg import PoseStamped
 from styx_msgs.msg import Lane, Waypoint
+from std_msgs.msg import Int32
 
 import math
 
@@ -35,7 +36,7 @@ class WaypointUpdater(object):
         rospy.Subscriber('/base_waypoints', Lane, self.waypoints_cb)
 
         # TODO: Add a subscriber for /traffic_waypoint and /obstacle_waypoint below
-        # rospy.Subscriber('/traffic_waypoint', PoseStamped, self.traffic_cb)
+        rospy.Subscriber('/traffic_waypoint', Int32, self.traffic_cb)
 
         self.final_waypoints_pub = rospy.Publisher('final_waypoints', Lane, queue_size=1)
 
@@ -51,8 +52,7 @@ class WaypointUpdater(object):
         rate = rospy.Rate(50)
         while not rospy.is_shutdown():
             if self.pose and self.waypoint_tree:
-                closest_idx = self.get_closest_waypoint_idx()
-                self.publish_waypoints(closest_idx)
+                self.publish_waypoints()
             rate.sleep()              
 
     def get_closest_waypoint_idx(self):
@@ -68,10 +68,15 @@ class WaypointUpdater(object):
             return closest_idx
         return (closest_idx + 1) % len(self.waypoints_2d)
         
-    def publish_waypoints(self, closest_idx):
+    def publish_waypoints(self):
+        final_lane = self.generate_lane()
+        self.final_waypoints_pub.publish(final_lane)
+        
+    def generate_lane(self):
+        closest_idx = self.get_closest_waypoint_idx()
         lane = Lane()
         lane.waypoints = self.base_waypoints.waypoints[closest_idx : closest_idx + LOOKAHEAD_WPS]
-        self.final_waypoints_pub.publish(lane)
+        return lane
     
     def pose_cb(self, msg):
         self.pose = msg
