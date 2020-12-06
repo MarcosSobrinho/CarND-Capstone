@@ -11,6 +11,7 @@ import tf
 import cv2
 import yaml
 
+
 from scipy.spatial import KDTree
 
 STATE_COUNT_THRESHOLD = 3
@@ -81,6 +82,7 @@ class TLDetector(object):
             return 
         self.has_image = True
         self.camera_image = msg
+        
         light_wp, state = self.process_traffic_lights()
 
         '''
@@ -130,13 +132,20 @@ class TLDetector(object):
         if(not self.has_image):
             self.prev_light_loc = None
             return False
-
-        cv_image = self.bridge.imgmsg_to_cv2(self.camera_image, "bgr8")
-
-        #Get classification
-        return self.light_classifier.get_classification(cv_image)
         """
+        
+        ######### with classifier #########
+        cv_image = self.bridge.imgmsg_to_cv2(self.camera_image, "bgr8")
+        #cv2.imwrite('./test_imgs/Image.jpg', cv_image)
+        #Get classification
+        
+        return self.light_classifier.get_classification(cv_image)
+        ######### end ############
+        """
+        ######## with ground truth #######
         return light.state
+        ######## end #########
+        """
 
     def process_traffic_lights(self):
         """Finds closest visible traffic light, if one exists, and determines its

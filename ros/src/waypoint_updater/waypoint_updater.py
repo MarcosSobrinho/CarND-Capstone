@@ -42,6 +42,7 @@ class WaypointUpdater(object):
 
         self.base_waypoints = None
         self.waypoint_tree = None
+        self.waypoints_size = None
         
         self.pose = None
         self.waypoints_2d = None
@@ -78,8 +79,15 @@ class WaypointUpdater(object):
         closest_idx = self.get_closest_waypoint_idx()
         farthest_idx = closest_idx + LOOKAHEAD_WPS
         lane = Lane()
+        base_waypoints = None
         
-        base_waypoints = self.base_waypoints.waypoints[closest_idx : farthest_idx]
+        if farthest_idx > self.waypoints_size :
+            farthest_idx = farthest_idx - self.waypoints_size
+            base_waypoints = self.base_waypoints.waypoints[closest_idx : self.waypoints_size]
+            base_waypoints += self.base_waypoints.waypoints[0 : farthest_idx]
+            
+        else :   
+            base_waypoints = self.base_waypoints.waypoints[closest_idx : farthest_idx]
         
         if (self.stopline_wp_idx == -1) or (self.stopline_wp_idx >= farthest_idx):
             lane.waypoints = base_waypoints
@@ -112,6 +120,7 @@ class WaypointUpdater(object):
         if not self.waypoints_2d:
             self.waypoints_2d = [[pt.pose.pose.position.x, pt.pose.pose.position.y] for pt in waypoints.waypoints]
             self.waypoint_tree = KDTree(self.waypoints_2d)
+            self.waypoints_size = len(self.waypoints_2d)
         
 
     def traffic_cb(self, msg):

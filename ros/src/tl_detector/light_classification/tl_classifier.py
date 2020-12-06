@@ -1,4 +1,6 @@
 from styx_msgs.msg import TrafficLight
+import cv2
+import numpy as np
 
 class TLClassifier(object):
     def __init__(self):
@@ -16,4 +18,12 @@ class TLClassifier(object):
 
         """
         #TODO implement light color prediction
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+        lower = np.array([170,150,220])
+        upper = np.array([179,255,255])
+        mask = cv2.inRange(image, lower, upper)
+        pixels = cv2.countNonZero(mask)
+        if pixels > 100 :
+            return TrafficLight.RED
+        
         return TrafficLight.UNKNOWN
