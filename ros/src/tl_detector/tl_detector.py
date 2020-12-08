@@ -14,7 +14,7 @@ import yaml
 
 from scipy.spatial import KDTree
 
-STATE_COUNT_THRESHOLD = 3
+STATE_COUNT_THRESHOLD = 1
 
 class TLDetector(object):
     def __init__(self):
@@ -27,7 +27,7 @@ class TLDetector(object):
         self.waypoint_tree = None
         
         self.camera_image = None
-        self.lights = []
+        self.lights = []        
 
         sub1 = rospy.Subscriber('/current_pose', PoseStamped, self.pose_cb)
         sub2 = rospy.Subscriber('/base_waypoints', Lane, self.waypoints_cb)
@@ -55,9 +55,17 @@ class TLDetector(object):
         self.last_state = TrafficLight.UNKNOWN
         self.last_wp = -1
         self.state_count = 0
-
-        rospy.spin()
-
+        self.has_image = False
+        
+        self.loop()
+        
+    def loop(self):
+        rate = rospy.Rate(0.9)
+        while not rospy.is_shutdown():
+            if self.has_image and self.waypoint_tree:
+                self.publish()
+            rate.sleep()
+            
     def pose_cb(self, msg):
         self.pose = msg
 
@@ -69,8 +77,12 @@ class TLDetector(object):
 
     def traffic_cb(self, msg):
         self.lights = msg.lights
-
+        
     def image_cb(self, msg):
+        self.has_image = True
+        self.camera_image = msg
+
+    def publish(self):
         """Identifies red lights in the incoming camera image and publishes the index
             of the waypoint closest to the red light's stop line to /traffic_waypoint
 
@@ -78,10 +90,6 @@ class TLDetector(object):
             msg (Image): image from car-mounted camera
 
         """
-        if self.waypoint_tree is None : 
-            return 
-        self.has_image = True
-        self.camera_image = msg
         
         light_wp, state = self.process_traffic_lights()
 
@@ -135,17 +143,14 @@ class TLDetector(object):
         """
         
         ######### with classifier #########
-        cv_image = self.bridge.imgmsg_to_cv2(self.camera_image, "bgr8")
-        #cv2.imwrite('./test_imgs/Image.jpg', cv_image)
+        #cv_image = self.bridge.imgmsg_to_cv2(self.camera_image, "bgr8")
         #Get classification
         
-        return self.light_classifier.get_classification(cv_image)
+        return self.light_classifier.get_classification(self.bridge.imgmsg_to_cv2(self.camera_image, "bgr8"))
         ######### end ############
-        """
         ######## with ground truth #######
-        return light.state
+        #return light.state
         ######## end #########
-        """
 
     def process_traffic_lights(self):
         """Finds closest visible traffic light, if one exists, and determines its

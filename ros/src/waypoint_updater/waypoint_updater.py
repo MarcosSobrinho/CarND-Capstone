@@ -25,7 +25,7 @@ as well as to verify your TL classifier.
 TODO (for Yousuf and Aaron): Stopline location for each traffic light.
 '''
 
-LOOKAHEAD_WPS = 30 # Number of waypoints we will publish. You can change this number
+LOOKAHEAD_WPS = 24 # Number of waypoints we will publish. You can change this number
 MAX_DECEL = .5
 
 class WaypointUpdater(object):
@@ -52,7 +52,7 @@ class WaypointUpdater(object):
         self.loop()
     
     def loop(self):
-        rate = rospy.Rate(50)
+        rate = rospy.Rate(20)
         while not rospy.is_shutdown():
             if self.pose and self.waypoint_tree:
                 self.publish_waypoints()
@@ -81,10 +81,10 @@ class WaypointUpdater(object):
         lane = Lane()
         base_waypoints = None
         
-        if farthest_idx > self.waypoints_size :
-            farthest_idx = farthest_idx - self.waypoints_size
-            base_waypoints = self.base_waypoints.waypoints[closest_idx : self.waypoints_size]
-            base_waypoints += self.base_waypoints.waypoints[0 : farthest_idx]
+        if farthest_idx > (self.waypoints_size + LOOKAHEAD_WPS - 5):
+            #farthest_idx = farthest_idx - self.waypoints_size
+            #base_waypoints = self.base_waypoints.waypoints[closest_idx : self.waypoints_size]
+            base_waypoints = self.base_waypoints.waypoints[0 : LOOKAHEAD_WPS]
             
         else :   
             base_waypoints = self.base_waypoints.waypoints[closest_idx : farthest_idx]
